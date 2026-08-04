@@ -3,7 +3,8 @@
   "name": "claude-guards",
   "description": "Schutz-Hooks für Claude Code — Versionierungspflicht, Python-Syntax-Check und Sicherheits-Guard.",
   "owner": {
-    "name": "Alexander Hufnagel"
+    "name": "Alexander Hufnagel",
+    "url": "https://github.com/maumke92/claude-guards"
   },
   "plugins": [
     {
