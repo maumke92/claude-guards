@@ -1,0 +1,22 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "claude-guards",
+  "description": "Schutz-Hooks für Claude Code — Versionierungspflicht, Python-Syntax-Check und Sicherheits-Guard.",
+  "owner": {
+    "name": "Alexander Hufnagel"
+  },
+  "plugins": [
+    {
+      "name": "dev-guards",
+      "description": "Blockiert Commits ohne gestagtes CHANGELOG.md (greift nur in Projekten mit CHANGELOG.md) und prüft .py-Dateien nach jedem Edit per py_compile.",
+      "source": "./dev-guards",
+      "category": "productivity"
+    },
+    {
+      "name": "sicherheits-guard",
+      "description": "PreToolUse-Guard: blockt Zugriffe auf .env, Backups, DB-Dumps, private Schlüssel und gefährliche Bash-Befehle.",
+      "source": "./sicherheits-guard",
+      "category": "security"
+    }
+  ]
+}
