@@ -8,6 +8,7 @@ Funktioniert unter Windows und macOS identisch (nur Python-Standardbibliothek).
 """
 
 import json
+import re
 import sys
 
 # ---------------------------------------------------------------------------
@@ -43,7 +44,12 @@ BLOCKED_COMMAND_PATTERNS = [
     "git add --all",
     "rm -rf /",
     "format c:",
+    "--dangerously-skip-permissions",  # Agent ohne Permission-Schranken starten
 ]
+
+# Supply-Chain: Download-Befehl direkt in die Shell gepipet (curl ... | bash)
+DOWNLOAD_TOOLS = ["curl", "wget", "iwr", "irm", "invoke-webrequest", "invoke-restmethod"]
+PIPE_TO_SHELL = re.compile(r"\|\s*(bash|sh|zsh|iex|powershell|pwsh)\b")
 
 FILE_TOOLS = {"Read", "Edit", "Write", "NotebookEdit", "MultiEdit"}
 
@@ -70,7 +76,10 @@ def command_is_blocked(command: str) -> str | None:
     for pattern in BLOCKED_COMMAND_PATTERNS:
         if pattern in c:
             return pattern
-    # 2) Befehle, die sensible Pfade beruehren (cat .env, copy backups\..., python x.py .env)
+    # 2) Download direkt in die Shell gepipet (Supply-Chain-Risiko)
+    if PIPE_TO_SHELL.search(c) and any(t in c for t in DOWNLOAD_TOOLS):
+        return "download | shell"
+    # 3) Befehle, die sensible Pfade beruehren (cat .env, copy backups\..., python x.py .env)
     for exc in ALLOWED_EXCEPTIONS:
         if exc in c:
             return None
