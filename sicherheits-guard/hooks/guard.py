@@ -47,8 +47,10 @@ BLOCKED_COMMAND_PATTERNS = [
     "--dangerously-skip-permissions",  # Agent ohne Permission-Schranken starten
 ]
 
-# Supply-Chain: Download-Befehl direkt in die Shell gepipet (curl ... | bash)
-DOWNLOAD_TOOLS = ["curl", "wget", "iwr", "irm", "invoke-webrequest", "invoke-restmethod"]
+# Supply-Chain: Download-Befehl direkt in die Shell gepipet (curl ... | bash).
+# Wortgrenzen, damit "confirm"/"firm" (enthaelt "irm") nicht faelschlich blocken.
+DOWNLOAD_TOOL_RE = re.compile(
+    r"\b(?:curl|wget|iwr|irm|invoke-webrequest|invoke-restmethod)\b")
 PIPE_TO_SHELL = re.compile(r"\|\s*(bash|sh|zsh|iex|powershell|pwsh)\b")
 
 FILE_TOOLS = {"Read", "Edit", "Write", "NotebookEdit", "MultiEdit"}
@@ -77,15 +79,20 @@ def command_is_blocked(command: str) -> str | None:
         if pattern in c:
             return pattern
     # 2) Download direkt in die Shell gepipet (Supply-Chain-Risiko)
-    if PIPE_TO_SHELL.search(c) and any(t in c for t in DOWNLOAD_TOOLS):
+    if PIPE_TO_SHELL.search(c) and DOWNLOAD_TOOL_RE.search(c):
         return "download | shell"
     # 3) Befehle, die sensible Pfade beruehren (cat .env, copy backups\..., python x.py .env)
-    for exc in ALLOWED_EXCEPTIONS:
-        if exc in c:
-            return None
-    for pattern in BLOCKED_PATH_PATTERNS:
-        if pattern in c:
-            return pattern
+    #    Pro Token entscheiden: eine erlaubte Ausnahme (z. B. .env.example) befreit
+    #    NUR ihren eigenen Token, nicht den ganzen Befehl - sonst genuegt ein
+    #    angehaengtes ".env.example", um das Lesen von ".env" zu tarnen
+    #    (cat .env .env.example).
+    for token in c.split():
+        bare = token.strip("\"'")
+        if any(bare.endswith(exc) for exc in ALLOWED_EXCEPTIONS):
+            continue
+        for pattern in BLOCKED_PATH_PATTERNS:
+            if pattern in bare:
+                return pattern
     return None
 
 
