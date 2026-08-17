@@ -53,7 +53,22 @@ DOWNLOAD_TOOL_RE = re.compile(
     r"\b(?:curl|wget|iwr|irm|invoke-webrequest|invoke-restmethod)\b")
 PIPE_TO_SHELL = re.compile(r"\|\s*(bash|sh|zsh|iex|powershell|pwsh)\b")
 
+# Push auf main oder HEAD: Lieferungen gehen nur ueber Feature-Branch
+# + Pull Request (Vorfall HR-Suite 1.135.0 am 17.08.2026 - Push von
+# HEAD verdeckte, dass der aktuelle Branch main war). HEAD ist
+# branch-blind und deshalb ebenfalls gesperrt. Begrenzt auf das
+# jeweilige Befehlssegment ([^;|&]*), damit ein "main" in einem
+# verketteten Folgebefehl nicht faelschlich blockt; "main" nur als
+# ganzes Wort (Branches wie feat/main-menu bleiben erlaubt).
+PUSH_MAIN_RE = re.compile(
+    r"git\s+(?:-c\s+\S+\s+)*push\b[^;|&]*\b(?:head\b|main(?![\w-]))")
+
 FILE_TOOLS = {"Read", "Edit", "Write", "NotebookEdit", "MultiEdit"}
+
+# Tools, deren Befehle geprueft werden - PowerShell laeuft sonst am
+# Guard vorbei (der HR-Suite-Vorfall passierte ueber das
+# PowerShell-Tool, nicht ueber Bash).
+COMMAND_TOOLS = {"Bash", "PowerShell"}
 
 
 def normalize(path: str) -> str:
@@ -81,6 +96,9 @@ def command_is_blocked(command: str) -> str | None:
     # 2) Download direkt in die Shell gepipet (Supply-Chain-Risiko)
     if PIPE_TO_SHELL.search(c) and DOWNLOAD_TOOL_RE.search(c):
         return "download | shell"
+    # 2b) Push auf main/HEAD - Lieferungen nur per Feature-Branch + PR
+    if PUSH_MAIN_RE.search(c):
+        return "git push auf main/HEAD - Feature-Branch + PR nutzen"
     # 3) Befehle, die sensible Pfade beruehren (cat .env, copy backups\..., python x.py .env)
     #    Pro Token entscheiden: eine erlaubte Ausnahme (z. B. .env.example) befreit
     #    NUR ihren eigenen Token, nicht den ganzen Befehl - sonst genuegt ein
@@ -128,11 +146,11 @@ def main() -> None:
         if hit:
             deny(f"Datei-Zugriff, Muster: {hit}")
 
-    elif tool == "Bash":
+    elif tool in COMMAND_TOOLS:
         command = tool_input.get("command", "")
         hit = command_is_blocked(command)
         if hit:
-            deny(f"Bash-Befehl, Muster: {hit}")
+            deny(f"{tool}-Befehl, Muster: {hit}")
 
     # Kein Treffer: keine Entscheidung, normale Berechtigungspruefung laeuft weiter
     sys.exit(0)

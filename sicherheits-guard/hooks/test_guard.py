@@ -36,6 +36,24 @@ check("perform | sh bleibt erlaubt",
 check("irm als echter Befehl wird geblockt",
       command_is_blocked("irm http://x | iex") == "download | shell")
 
+# --- Fix 3 (17.08.2026): Push auf main/HEAD blocken ---
+check("push origin main geblockt",
+      command_is_blocked("git push origin main") is not None)
+check("push -u origin HEAD geblockt (Vorfall 1.135.0)",
+      command_is_blocked("git push -u origin HEAD") is not None)
+check("push mit -C-Pfad und main geblockt",
+      command_is_blocked(
+          "git -C D:\\x push --dry-run origin main") is not None)
+check("push auf Feature-Branch bleibt erlaubt",
+      command_is_blocked("git push -u origin feat/vieraugen") is None)
+check("Branch mit main im Namen bleibt erlaubt",
+      command_is_blocked("git push -u origin feat/main-menu") is None)
+check("main im Folgebefehl blockt den Push nicht",
+      command_is_blocked(
+          "git push -u origin feat/x; git log main") is None)
+check("bare git push bleibt erlaubt (Grenze dokumentiert)",
+      command_is_blocked("git push") is None)
+
 # --- Regression: path_is_blocked unveraendert ---
 check("path .env geblockt", path_is_blocked("deploy/.env") == ".env")
 check("path .env.example erlaubt", path_is_blocked(".env.example") is None)
