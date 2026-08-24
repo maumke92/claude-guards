@@ -6,12 +6,15 @@ bei der Installation automatisch — kein Eingriff in settings.json nötig.
 ## Installation
 
 ```
-claude plugin marketplace add C:\KI-Tools\Claude\claude-guards
+claude plugin marketplace add maumke92/claude-guards
 claude plugin install dev-guards@claude-guards
 claude plugin install sicherheits-guard@claude-guards
 ```
 
 Danach neue Claude-Code-Session starten.
+
+Zum Entwickeln stattdessen den lokalen Klon als Marketplace angeben:
+`claude plugin marketplace add <pfad-zum-klon>`.
 
 ## dev-guards
 
@@ -35,10 +38,10 @@ Danach neue Claude-Code-Session starten.
   Schlüssel …) und gefährliche Bash-Befehle (`git add -A`, `rm -rf /` …).
   Benötigt nur Python (Standardbibliothek) im PATH.
 - Hinweis: Die zusätzlichen permissions-Deny-Regeln kann ein Plugin nicht
-  setzen. Wer sie zusätzlich möchte (Gürtel + Hosenträger), nutzt weiterhin
-  `C:\KI-Tools\Claude\guard-setup\Guard-Installieren.cmd`.
+  setzen. Wer sie zusätzlich möchte (Gürtel + Hosenträger), trägt sie von Hand
+  unter `permissions.deny` in `settings.json` ein.
 
 ## Herkunft
 
 Extrahiert aus den projektlokalen Hooks von hr-suite und
-claude-projekt-studio sowie aus guard-setup (C:\KI-Tools\Claude).
+claude-projekt-studio sowie aus dem früheren guard-setup.
