@@ -21,6 +21,12 @@ Danach neue Claude-Code-Session starten.
 - **py-check** (PostToolUse/Edit|Write): kompiliert jede geänderte
   .py-Datei mit `.venv\Scripts\python.exe -m py_compile` und meldet
   Syntaxfehler sofort. Greift nur, wenn das Projekt eine `.venv` hat.
+- **repeat-guard** (PostToolUse, alle Tools): zählt identische
+  Werkzeugaufrufe je Sitzung und erinnert beim dritten Mal einmalig an die
+  Abbruchpunkte-Regel („zweimal am selben Symptom gescheitert heißt
+  anhalten"). Danach bleibt dieselbe Signatur stumm. Blockt nie, bei
+  kaputter Eingabe Exit 0. Zustand liegt je Sitzung im Temp-Ordner.
+  Selbsttest: `python dev-guards/hooks/test_repeat_guard.py`.
 
 ## sicherheits-guard
 
