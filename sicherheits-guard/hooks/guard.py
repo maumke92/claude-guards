@@ -16,15 +16,22 @@ import sys
 # auf normalisierte Pfade mit "/"-Trennern).
 # ---------------------------------------------------------------------------
 
-# Dateien/Ordner, die Claude weder lesen noch schreiben darf
+# Dateien/Ordner, die Claude weder lesen noch schreiben darf.
+# Muster mit fuehrendem Punkt gelten als Endung und treffen nur an der
+# Wortgrenze (siehe pattern_trifft). Deshalb steht hier jede Variante
+# einzeln, die der fruehere Teilstring-Vergleich nebenbei mitnahm.
 BLOCKED_PATH_PATTERNS = [
     ".env",          # trifft .env, .env.prod, deploy/.env ...
+    ".envrc",        # direnv - haelt regelmaessig Zugangsdaten
     "backups/",      # Datenbank-Backups mit echten Personaldaten
     "media/",        # hochgeladene Dokumente (Personalakten etc.)
     ".sql.gz",       # DB-Dumps
     ".sql",          # unkomprimierte Dumps
+    ".sqlite",       # Datei-Datenbanken; .sqlite3 braucht einen eigenen
+    ".sqlite3",      # Eintrag, weil die Ziffer die Wortgrenze aufhebt
     ".pem",          # Zertifikate / private Schluessel
     ".key",
+    ".keystore",     # Java-Keystore
     "id_rsa",
     "id_ed25519",
     "secrets/",
@@ -75,6 +82,38 @@ def normalize(path: str) -> str:
     return path.replace("\\", "/").lower()
 
 
+# Endungsmuster treffen nur an der Wortgrenze: ".key" sperrt "server.key",
+# aber nicht ".keys()". Genau dieser Fehlalarm trat am 25.08.2026 im Betrieb
+# auf (Audit-Befund B4). Muster mit "/" oder ohne fuehrenden Punkt bleiben
+# Teilstring-Vergleiche - dort ist das gewollt, "backups/" soll auch
+# "app/backups/x" treffen.
+#
+# Eine Sperrliste zu lockern kann sie ausschliesslich durchlaessiger machen.
+# Die Regel dieser Lockerung ist praezise benennbar: Ein Name, in dem auf die
+# Endung noch ein Buchstabe oder eine Ziffer folgt, wird nicht mehr erfasst.
+# Das ist eine unendliche Menge, keine Liste - ".envfoo" faellt genauso
+# heraus wie ".keyabc".
+#
+# Deshalb sind nicht "alle" Faelle geprueft, sondern die, die es in der
+# Praxis gibt: direnv-Dateien, Datei-Datenbanken und Java-Keystores wurden
+# oben ausdruecklich wieder aufgenommen, weil sie schuetzenswert sind und
+# vorher nur zufaellig mitgingen. Der vierte Fall, ".keys", ist der gewollte
+# Fehlalarm. Alle vier stehen als Fall in test_guard.py - wer die Liste
+# kuenftig anfasst, sieht dort sofort, was sich an der Aussenkante bewegt.
+#
+# Wer eine weitere schuetzenswerte Endung entdeckt, die bisher nur als
+# Teilstring einer anderen mitlief, traegt sie oben ein statt hier die
+# Wortgrenze zu lockern.
+_WORTGRENZE = {p: re.compile(re.escape(p) + r"(?![0-9a-z])")
+               for p in BLOCKED_PATH_PATTERNS if p.startswith(".")}
+
+
+def pattern_trifft(pattern: str, text: str) -> bool:
+    """Teilstring fuer Ordner- und Namensmuster, Wortgrenze fuer Endungen."""
+    regex = _WORTGRENZE.get(pattern)
+    return bool(regex.search(text)) if regex else pattern in text
+
+
 def path_is_blocked(path: str) -> str | None:
     """Gibt das getroffene Muster zurueck oder None."""
     p = normalize(path)
@@ -82,7 +121,7 @@ def path_is_blocked(path: str) -> str | None:
         if p.endswith(exc):
             return None
     for pattern in BLOCKED_PATH_PATTERNS:
-        if pattern in p:
+        if pattern_trifft(pattern, p):
             return pattern
     return None
 
@@ -109,7 +148,7 @@ def command_is_blocked(command: str) -> str | None:
         if any(bare.endswith(exc) for exc in ALLOWED_EXCEPTIONS):
             continue
         for pattern in BLOCKED_PATH_PATTERNS:
-            if pattern in bare:
+            if pattern_trifft(pattern, bare):
                 return pattern
     return None
 

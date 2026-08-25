@@ -38,10 +38,19 @@ Zwei Fallen dabei:
 
 **„Vom Sicherheits-Guard geblockt (…)"**
 Der Pfad oder Befehl trifft ein Sperrmuster. Erlaubt bleiben ausdrücklich
-`.env.example` und Geschwister. Wichtig: Die Prüfung ist ein **Teilstring**-
-Vergleich auf kleingeschriebenem Text — deshalb blockiert auch ein Befehl, der
-ein gesperrtes Muster nur *erwähnt*, etwa ein `grep` nach dem Mustertext selbst.
-Dann den Befehl umformulieren.
+`.env.example` und Geschwister.
+
+Wie streng verglichen wird, hängt seit 1.2.0 von der Art des Musters ab:
+
+- **Endungen** (`.key`, `.env`, `.sql`, `.pem`) treffen nur an der Wortgrenze.
+  `server.key` ist gesperrt, `d.keys()` nicht mehr.
+- **Ordner und Namen** (`backups/`, `secrets/`, `id_rsa`) bleiben
+  Teilstring-Vergleiche und treffen auch mitten im Pfad.
+
+Was bleibt: Der Vergleich läuft über den **ganzen** Befehlstext. Ein `grep` nach
+einem gesperrten Mustertext blockiert deshalb weiterhin. Das ist kein Versehen —
+sonst genügte ein Anführungszeichen, um einen Zugriff zu tarnen. Dann den Befehl
+umformulieren oder den Suchbegriff aus Teilstücken zusammensetzen.
 (`guard.py`: `"Vom Sicherheits-Guard geblockt ({reason}). "`)
 
 **Push auf `main` oder `HEAD` blockiert**
@@ -67,15 +76,21 @@ Zeilenanfang verankert) — der Fix steckt in **dev-guards 1.0.1**. Eine ältere
 Installation prüft `CHANGELOG.md` stattdessen relativ zum Arbeitsverzeichnis der
 Shell und blockiert dann Commits in *andere* Repos.
 
-Installierte Fassung: `~/.claude/plugins/cache/claude-guards/dev-guards/<version>/`.
-Steht dort `1.0.0`, dann aktualisieren:
+Beim `sicherheits-guard` gilt dasselbe für **1.2.0**: Erst diese Fassung
+vergleicht Endungen an der Wortgrenze. Eine ältere blockiert weiterhin jeden
+Befehl, in dem `.keys()` oder ein ähnlicher Alltagsausdruck vorkommt.
+
+Installierte Fassung: `~/.claude/plugins/cache/claude-guards/<plugin>/<version>/`.
+Steht dort eine niedrigere Nummer, dann aktualisieren:
 
 ```
 claude plugin marketplace update claude-guards
 claude plugin update dev-guards@claude-guards
+claude plugin update sicherheits-guard@claude-guards
 ```
 
-Danach eine neue Sitzung starten.
+Danach eine neue Sitzung starten — Hooks werden beim Start geladen, ein
+laufendes Fenster arbeitet weiter mit der alten Fassung.
 
 ## Grenzen
 
