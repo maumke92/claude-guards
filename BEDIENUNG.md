@@ -76,15 +76,21 @@ Zeilenanfang verankert) — der Fix steckt in **dev-guards 1.0.1**. Eine ältere
 Installation prüft `CHANGELOG.md` stattdessen relativ zum Arbeitsverzeichnis der
 Shell und blockiert dann Commits in *andere* Repos.
 
-Installierte Fassung: `~/.claude/plugins/cache/claude-guards/dev-guards/<version>/`.
-Steht dort `1.0.0`, dann aktualisieren:
+Beim `sicherheits-guard` gilt dasselbe für **1.2.0**: Erst diese Fassung
+vergleicht Endungen an der Wortgrenze. Eine ältere blockiert weiterhin jeden
+Befehl, in dem `.keys()` oder ein ähnlicher Alltagsausdruck vorkommt.
+
+Installierte Fassung: `~/.claude/plugins/cache/claude-guards/<plugin>/<version>/`.
+Steht dort eine niedrigere Nummer, dann aktualisieren:
 
 ```
 claude plugin marketplace update claude-guards
 claude plugin update dev-guards@claude-guards
+claude plugin update sicherheits-guard@claude-guards
 ```
 
-Danach eine neue Sitzung starten.
+Danach eine neue Sitzung starten — Hooks werden beim Start geladen, ein
+laufendes Fenster arbeitet weiter mit der alten Fassung.
 
 ## Grenzen
 
