@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 """Selbsttest fuer guard.py (ohne Framework): python test_guard.py
 
-Deckt die zwei am 16.08.2026 gefixten Luecken ab plus Regression:
+Deckt die gefixten Luecken ab plus Regression:
 - ALLOWED_EXCEPTIONS befreite frueher den GANZEN Befehl (Bypass).
 - Download-Tools wurden per Substring erkannt (blockte "confirm | bash").
+- Endungsmuster trafen als Substring und blockten damit gewoehnlichen Code
+  (Befund B4 vom 25.08.2026). Die vier Namensgruppen, die durch die
+  Umstellung zusaetzlich durchkommen, stehen unten einzeln als Fall: Die
+  Aussenkante der Sperrliste ist abgezaehlt, nicht geschaetzt.
 """
 from guard import command_is_blocked, path_is_blocked
 
@@ -53,6 +57,37 @@ check("main im Folgebefehl blockt den Push nicht",
           "git push -u origin feat/x; git log main") is None)
 check("bare git push bleibt erlaubt (Grenze dokumentiert)",
       command_is_blocked("git push") is None)
+
+# --- Fix 4 (25.08.2026, Audit-Befund B4): Endungen an der Wortgrenze ---
+# Der Fehlalarm, der die Umstellung ausgeloest hat:
+check(".keys() bleibt erlaubt", command_is_blocked("python -c d.keys()") is None)
+check("secret.keys bleibt erlaubt", path_is_blocked("app/secret.keys") is None)
+
+# Die Endungen selbst bleiben gesperrt - das ist der Zweck der Liste:
+check("server.key bleibt geblockt", path_is_blocked("etc/server.key") == ".key")
+check("dump.sql bleibt geblockt", path_is_blocked("dump.sql") is not None)
+check("dump.sql.gz bleibt geblockt", path_is_blocked("dump.sql.gz") is not None)
+check("cert.pem bleibt geblockt", path_is_blocked("ssl/cert.pem") == ".pem")
+check(".env.prod bleibt geblockt", path_is_blocked("deploy/.env.prod") == ".env")
+check("Endung am Zeilenende trifft", path_is_blocked("x.key") == ".key")
+check("Endung vor Anfuehrungszeichen trifft",
+      command_is_blocked('cat "x.key"') == ".key")
+
+# Ordnermuster bleiben absichtlich Teilstring - "backups/" soll auch mitten
+# im Pfad greifen:
+check("backups/ trifft auch mitten im Pfad",
+      path_is_blocked("app/backups/db") == "backups/")
+check("secrets/ trifft auch mitten im Pfad",
+      path_is_blocked("k8s/secrets/token") == "secrets/")
+
+# Die drei Namen, die der alte Teilstring-Vergleich nebenbei mitnahm und die
+# deshalb ausdruecklich wieder in der Liste stehen. Faellt einer heraus,
+# scheitert hier ein Test statt still eine Datei durchzurutschen:
+check(".envrc bleibt geblockt", path_is_blocked(".envrc") == ".envrc")
+check(".sqlite bleibt geblockt", path_is_blocked("db.sqlite") == ".sqlite")
+check(".sqlite3 bleibt geblockt", path_is_blocked("db.sqlite3") == ".sqlite3")
+check(".keystore bleibt geblockt",
+      path_is_blocked("app.keystore") == ".keystore")
 
 # --- Regression: path_is_blocked unveraendert ---
 check("path .env geblockt", path_is_blocked("deploy/.env") == ".env")
