@@ -47,6 +47,13 @@ Wie streng verglichen wird, hängt seit 1.2.0 von der Art des Musters ab:
 - **Ordner und Namen** (`backups/`, `secrets/`, `id_rsa`) bleiben
   Teilstring-Vergleiche und treffen auch mitten im Pfad.
 
+Weil die Wortgrenze schärfer trennt, stehen seit 1.2.0 vier Endungen
+zusätzlich in der Liste, die vorher nur zufällig als Teilstück anderer
+Muster mitliefen: direnv-Dateien, Datei-Datenbanken in beiden Schreibweisen
+(mit und ohne angehängte 3) und Java-Keystores. Wer eine weitere
+schützenswerte Endung entdeckt, trägt sie in die Liste ein — die Wortgrenze
+zu lockern wäre der falsche Hebel.
+
 Was bleibt: Der Vergleich läuft über den **ganzen** Befehlstext. Ein `grep` nach
 einem gesperrten Mustertext blockiert deshalb weiterhin. Das ist kein Versehen —
 sonst genügte ein Anführungszeichen, um einen Zugriff zu tarnen. Dann den Befehl

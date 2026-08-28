@@ -2,8 +2,14 @@
   "kapitel": [
     {
       "name": "Bedienung",
-      "quellen": ["README.md", "sicherheits-guard/hooks/guard.py", "dev-guards/hooks/commit-guard.ps1", "dev-guards/hooks/py-check.ps1", "dev-guards/hooks/repeat-guard.py"],
-      "gebaut_bei": "58c004371d558bf10911954bbe2e95a4a5bbf81f"
+      "quellen": [
+        "README.md",
+        "sicherheits-guard/hooks/guard.py",
+        "dev-guards/hooks/commit-guard.ps1",
+        "dev-guards/hooks/py-check.ps1",
+        "dev-guards/hooks/repeat-guard.py"
+      ],
+      "gebaut_bei": "201fedd393a653716586e9ed3564a4bd5e925eaf"
     }
   ]
 }
