@@ -1,7 +1,7 @@
 {
   "name": "dev-guards",
   "description": "Drei Entwicklungs-Hooks: commit-guard blockiert Commits ohne gestagtes CHANGELOG.md (greift nur in Projekten, die ein CHANGELOG.md haben); py-check kompiliert geänderte .py-Dateien mit der Projekt-venv und meldet Syntaxfehler sofort; repeat-guard erinnert beim dritten identischen Werkzeugaufruf an die Abbruchpunkte-Regel, ohne zu blockieren.",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "author": {
     "name": "maumke92"
   }

@@ -21,17 +21,17 @@ import sys
 # Wortgrenze (siehe pattern_trifft). Deshalb steht hier jede Variante
 # einzeln, die der fruehere Teilstring-Vergleich nebenbei mitnahm.
 BLOCKED_PATH_PATTERNS = [
-    ".env",          # trifft .env, .env.prod, deploy/.env ...
-    ".envrc",        # direnv - haelt regelmaessig Zugangsdaten
-    "backups/",      # Datenbank-Backups mit echten Personaldaten
-    "media/",        # hochgeladene Dokumente (Personalakten etc.)
-    ".sql.gz",       # DB-Dumps
-    ".sql",          # unkomprimierte Dumps
-    ".sqlite",       # Datei-Datenbanken; .sqlite3 braucht einen eigenen
-    ".sqlite3",      # Eintrag, weil die Ziffer die Wortgrenze aufhebt
-    ".pem",          # Zertifikate / private Schluessel
+    ".env",  # trifft .env, .env.prod, deploy/.env ...
+    ".envrc",  # direnv - haelt regelmaessig Zugangsdaten
+    "backups/",  # Datenbank-Backups mit echten Personaldaten
+    "media/",  # hochgeladene Dokumente (Personalakten etc.)
+    ".sql.gz",  # DB-Dumps
+    ".sql",  # unkomprimierte Dumps
+    ".sqlite",  # Datei-Datenbanken; .sqlite3 braucht einen eigenen
+    ".sqlite3",  # Eintrag, weil die Ziffer die Wortgrenze aufhebt
+    ".pem",  # Zertifikate / private Schluessel
     ".key",
-    ".keystore",     # Java-Keystore
+    ".keystore",  # Java-Keystore
     "id_rsa",
     "id_ed25519",
     "secrets/",
@@ -46,8 +46,8 @@ ALLOWED_EXCEPTIONS = [
 
 # Bash-Befehle, die unabhaengig von Pfaden geblockt werden
 BLOCKED_COMMAND_PATTERNS = [
-    "git add -a",       # trifft "git add -A" (wir vergleichen kleingeschrieben)
-    "git add .",        # pauschales Stagen -> Gefahr, Sensibles zu committen
+    "git add -a",  # trifft "git add -A" (wir vergleichen kleingeschrieben)
+    "git add .",  # pauschales Stagen -> Gefahr, Sensibles zu committen
     "git add --all",
     "rm -rf /",
     "format c:",
@@ -57,7 +57,8 @@ BLOCKED_COMMAND_PATTERNS = [
 # Supply-Chain: Download-Befehl direkt in die Shell gepipet (curl ... | bash).
 # Wortgrenzen, damit "confirm"/"firm" (enthaelt "irm") nicht faelschlich blocken.
 DOWNLOAD_TOOL_RE = re.compile(
-    r"\b(?:curl|wget|iwr|irm|invoke-webrequest|invoke-restmethod)\b")
+    r"\b(?:curl|wget|iwr|irm|invoke-webrequest|invoke-restmethod)\b"
+)
 PIPE_TO_SHELL = re.compile(r"\|\s*(bash|sh|zsh|iex|powershell|pwsh)\b")
 
 # Push auf main oder HEAD: Lieferungen gehen nur ueber Feature-Branch
@@ -68,7 +69,8 @@ PIPE_TO_SHELL = re.compile(r"\|\s*(bash|sh|zsh|iex|powershell|pwsh)\b")
 # verketteten Folgebefehl nicht faelschlich blockt; "main" nur als
 # ganzes Wort (Branches wie feat/main-menu bleiben erlaubt).
 PUSH_MAIN_RE = re.compile(
-    r"git\s+(?:-c\s+\S+\s+)*push\b[^;|&]*\b(?:head\b|main(?![\w-]))")
+    r"git\s+(?:-c\s+\S+\s+)*push\b[^;|&]*\b(?:head\b|main(?![\w-]))"
+)
 
 FILE_TOOLS = {"Read", "Edit", "Write", "NotebookEdit", "MultiEdit"}
 
@@ -104,8 +106,11 @@ def normalize(path: str) -> str:
 # Wer eine weitere schuetzenswerte Endung entdeckt, die bisher nur als
 # Teilstring einer anderen mitlief, traegt sie oben ein statt hier die
 # Wortgrenze zu lockern.
-_WORTGRENZE = {p: re.compile(re.escape(p) + r"(?![0-9a-z])")
-               for p in BLOCKED_PATH_PATTERNS if p.startswith(".")}
+_WORTGRENZE = {
+    p: re.compile(re.escape(p) + r"(?![0-9a-z])")
+    for p in BLOCKED_PATH_PATTERNS
+    if p.startswith(".")
+}
 
 
 def pattern_trifft(pattern: str, text: str) -> bool:
@@ -154,18 +159,22 @@ def command_is_blocked(command: str) -> str | None:
 
 
 def deny(reason: str) -> None:
-    print(json.dumps({
-        "hookSpecificOutput": {
-            "hookEventName": "PreToolUse",
-            "permissionDecision": "deny",
-            "permissionDecisionReason": (
-                f"Vom Sicherheits-Guard geblockt ({reason}). "
-                "Sensible Dateien (.env, Backups, Personaldaten) sind fuer "
-                "Claude Code gesperrt. Falls der Zugriff wirklich noetig ist, "
-                "muss der Nutzer guard.py anpassen."
-            ),
-        }
-    }))
+    print(
+        json.dumps(
+            {
+                "hookSpecificOutput": {
+                    "hookEventName": "PreToolUse",
+                    "permissionDecision": "deny",
+                    "permissionDecisionReason": (
+                        f"Vom Sicherheits-Guard geblockt ({reason}). "
+                        "Sensible Dateien (.env, Backups, Personaldaten) sind fuer "
+                        "Claude Code gesperrt. Falls der Zugriff wirklich noetig ist, "
+                        "muss der Nutzer guard.py anpassen."
+                    ),
+                }
+            }
+        )
+    )
     sys.exit(0)
 
 

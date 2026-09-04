@@ -1,7 +1,7 @@
 {
   "name": "sicherheits-guard",
   "description": "Sicherheits-Guard als Plugin: blockt Lese-/Schreibzugriffe auf sensible Dateien (.env, Backups, DB-Dumps, private Schlüssel) und gefährliche Bash-Befehle. Nur Python-Standardbibliothek, läuft unter Windows und macOS.",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "author": {
     "name": "maumke92"
   }

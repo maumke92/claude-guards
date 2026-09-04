@@ -18,7 +18,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-SCHWELLE = 3          # ab dem wievielten identischen Aufruf erinnert wird
+SCHWELLE = 3  # ab dem wievielten identischen Aufruf erinnert wird
 MAX_SIGNATUREN = 300  # Notbremse gegen unbegrenzt wachsende Statusdateien
 
 ERINNERUNG = (
@@ -36,8 +36,9 @@ def signature(tool_name, tool_input):
     if tool_name in ("Bash", "PowerShell"):
         kern = " ".join(str(ti.get("command", "")).split())
     elif tool_name in ("Edit", "MultiEdit"):
-        kern = "{}|{}".format(ti.get("file_path", ""),
-                              str(ti.get("old_string", ""))[:200])
+        kern = "{}|{}".format(
+            ti.get("file_path", ""), str(ti.get("old_string", ""))[:200]
+        )
     elif tool_name in ("Grep", "Glob"):
         kern = "{}|{}".format(ti.get("pattern", ""), ti.get("path", ""))
     elif tool_name in ("Read", "Write", "NotebookEdit"):
@@ -46,7 +47,7 @@ def signature(tool_name, tool_input):
         kern = json.dumps(ti, sort_keys=True, ensure_ascii=False)[:400]
     if not kern.strip():
         return None
-    roh = "{}\x00{}".format(tool_name, kern)
+    roh = f"{tool_name}\x00{kern}"
     return hashlib.sha1(roh.encode("utf-8", "replace")).hexdigest()[:16]
 
 
@@ -60,7 +61,7 @@ def zaehle(zaehler, sig):
 def statusdatei(session_id):
     sicher = re.sub(r"[^A-Za-z0-9_-]", "_", str(session_id))[:64] or "ohne-sitzung"
     ordner = Path(tempfile.gettempdir()) / "claude-guards"
-    return ordner / "repeat-{}.json".format(sicher)
+    return ordner / f"repeat-{sicher}.json"
 
 
 def lade(pfad):
@@ -84,7 +85,7 @@ def speichere(pfad, zaehler):
     """
     try:
         pfad.parent.mkdir(parents=True, exist_ok=True)
-        vorlaeufig = pfad.with_suffix(".{}.tmp".format(os.getpid()))
+        vorlaeufig = pfad.with_suffix(f".{os.getpid()}.tmp")
         vorlaeufig.write_text(json.dumps(zaehler), encoding="utf-8")
         os.replace(vorlaeufig, pfad)
     except Exception:
@@ -111,14 +112,20 @@ def main():
 
     if erinnern:
         text = ERINNERUNG.format(tool=tool or "Werkzeug")
-        print(json.dumps({
-            "systemMessage": "Schleifen-Guard: dritter identischer {}-Aufruf.".format(
-                tool or "Werkzeug"),
-            "hookSpecificOutput": {
-                "hookEventName": "PostToolUse",
-                "additionalContext": text,
-            },
-        }, ensure_ascii=False))
+        print(
+            json.dumps(
+                {
+                    "systemMessage": "Schleifen-Guard: dritter identischer {}-Aufruf.".format(
+                        tool or "Werkzeug"
+                    ),
+                    "hookSpecificOutput": {
+                        "hookEventName": "PostToolUse",
+                        "additionalContext": text,
+                    },
+                },
+                ensure_ascii=False,
+            )
+        )
     return 0
 
 

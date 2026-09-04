@@ -1,0 +1,11 @@
+{
+  "test_cmd": "cd sicherheits-guard/hooks && python -m unittest -q test_guard && cd ../../dev-guards/hooks && python -m unittest -q test_repeat_guard",
+  "lint_cmd": "ruff check . && ruff format --check .",
+  "format_cmd": "ruff format .",
+  "sensitive_paths": [
+    "sicherheits-guard/hooks/guard.py"
+  ],
+  "exclude": [
+    "**/__pycache__/**"
+  ]
+}
